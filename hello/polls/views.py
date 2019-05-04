@@ -5,6 +5,7 @@ from django.views import generic
 from django.utils import timezone
 
 from .models import Choice, Question
+from .forms import RegisterForm
 
 class IndexView(generic.ListView):
     template_name = 'polls/index.html'
@@ -31,19 +32,34 @@ class DetailView(generic.DetailView):
         return Question.objects.filter(pub_date__lte=timezone.now())
 
 
+def detail(request, question_id):
+    question = get_object_or_404(Question, pk=question_id)
+    register_form = RegisterForm()
+    return render(request, 'polls/detail.html', {
+        'question': question,
+        'register_form': register_form
+    })
+
+
 class ResultsView(generic.DetailView):
     model = Question
     template_name = 'polls/results.html'
 
+
 def vote(request, question_id):
     question = get_object_or_404(Question, pk=question_id)
     try:
+        register_form = RegisterForm(request.POST)
+        if register_form.is_valid():
+            pass
         selected_choice = question.choice_set.get(pk=request.POST['choice'])
     except (KeyError, Choice.DoesNotExist):
         # Redisplay the question voting form.
+        register_form = RegisterForm()
         return render(request, 'polls/detail.html', {
             'question': question,
             'error_message': "You didn't select a choice.",
+            'register_form': register_form
         })
     else:
         selected_choice.votes += 1
